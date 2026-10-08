@@ -176,74 +176,118 @@ h3 { margin-top:24px; }
   pointer-events:none;
 }
 
-/* v20: keep dictionary navigation visible while reading a verb card */
-:root { --topbar-height:68px; }
-.topbar { min-height:var(--topbar-height); }
-body.dictionary-detail .tabs {
-  position:sticky;
-  top:var(--topbar-height);
-  z-index:4;
-  margin-bottom:0;
-  padding-top:4px;
-  padding-bottom:4px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
-}
-body.dictionary-detail .detail-back {
-  position:sticky;
-  top:calc(var(--topbar-height) + 58px);
-  z-index:3;
-  display:block;
-  width:100%;
-  margin:0 0 12px;
-  padding:10px 0;
-  text-align:left;
-  background:var(--bg);
-  box-shadow:0 2px 6px rgba(0,0,0,.04);
-}
-@media (max-width:480px) {
-  :root { --topbar-height:64px; }
-  body.dictionary-detail .detail-back {
-    top:calc(var(--topbar-height) + 52px);
-  }
+/* v23: robust fixed dictionary navigation for mobile browsers.
+   We use fixed positioning for the dictionary header/navigation and reserve
+   measured space in the document so the list/detail content never overlaps it.
+*/
+:root {
+  --sv-topbar-h: 84px;
+  --sv-tabs-h: 56px;
+  --sv-special-h: 72px;
 }
 
-/* v22: keep the complete dictionary navigation area visible while scrolling.
-   The page header, tabs, and dictionary search/letter controls stay pinned;
-   the verb list/card scrolls underneath them. */
+body.dictionary-view .topbar,
+body.dictionary-detail .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+body.dictionary-view main,
+body.dictionary-detail main {
+  padding-top: calc(var(--sv-topbar-h) + var(--sv-tabs-h) + 14px);
+}
+
 body.dictionary-view .tabs,
 body.dictionary-detail .tabs {
-  position:sticky;
-  top:var(--topbar-height);
-  z-index:10;
-  margin-bottom:0;
-  padding-top:4px;
-  padding-bottom:4px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  position: fixed;
+  top: var(--sv-topbar-h);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 100%);
+  z-index: 99;
+  margin: 0;
+  padding: 4px 18px;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
+
+body.dictionary-view #dictionary,
+body.dictionary-detail #dictionary {
+  padding-top: var(--sv-special-h);
+}
+
 body.dictionary-view .dictionary-toolbar {
-  position:sticky;
-  top:calc(var(--topbar-height) + 58px);
-  z-index:9;
-  background:var(--bg);
-  padding:12px 0 10px;
-  margin-bottom:8px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  position: fixed;
+  top: calc(var(--sv-topbar-h) + var(--sv-tabs-h));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 100%);
+  z-index: 98;
+  margin: 0;
+  padding: 12px 18px 10px;
+  background: var(--bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
+
 body.dictionary-detail .detail-back {
-  position:sticky;
-  top:calc(var(--topbar-height) + 58px);
-  z-index:9;
-  display:block;
-  width:100%;
-  margin:0 0 12px;
-  padding:10px 0;
-  text-align:left;
-  background:var(--bg);
-  box-shadow:0 2px 6px rgba(0,0,0,.04);
+  position: fixed;
+  top: calc(var(--sv-topbar-h) + var(--sv-tabs-h));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 100%);
+  z-index: 98;
+  display: block;
+  margin: 0;
+  padding: 10px 18px;
+  text-align: left;
+  background: var(--bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
 }
+
+.irregular-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border-radius: 50%;
+  background: #e53935;
+  color: #fff;
+  border: 0;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+  cursor: pointer;
+  box-sizing: border-box;
+  user-select: none;
+}
+
 @media (max-width:480px) {
-  body.dictionary-view .dictionary-toolbar,
+  body.dictionary-view main,
+  body.dictionary-detail main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body.dictionary-view .tabs,
+  body.dictionary-detail .tabs {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  body.dictionary-view .dictionary-toolbar {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
   body.dictionary-detail .detail-back {
-    top:calc(var(--topbar-height) + 52px);
+    padding-left: 22px;
+    padding-right: 22px;
   }
 }

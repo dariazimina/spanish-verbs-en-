@@ -219,7 +219,6 @@ const EN_FORMS = {
   recoger:{pres:["I pick up/collect","you pick up/collect","he/she/you picks up/collects","we pick up/collect","you pick up/collect","they/you pick up/collect"],pret:["I picked up/collected","you picked up/collected","he/she/you picked up/collected","we picked up/collected","you picked up/collected","they/you picked up/collected"],fut:["I will pick up/collect","you will pick up/collect","he/she/you will pick up/collect","we will pick up/collect","you will pick up/collect","they/you will pick up/collect"]}
 };
 function enForm(v,t,p){ return EN_FORMS[v.inf]?.[t]?.[p] || v.en; }
-function enForm(v,t,p){ return enForm(v,t,p); }
 
 const PEOPLE = ["yo","tú","él / ella / usted","nosotros","vosotros","ellos / ustedes"];
 const TIMES = {pres:"Presente", pret:"Pretérito Indefinido", fut:"Futuro"};
@@ -256,7 +255,7 @@ function translation(v,t=null,p=null){
 function form(v,t,p){return v[t][p]}
 function displayForm(v,t,p){ return form(v,t,p).replace(/\s+de$/i, ""); }
 function displayInf(v){ return v.inf.replace(/\s*\([^)]*\)/g, "").trim(); }
-function irregularBadge(v){ return v.type === "irregular" ? `<button type="button" class="irregular-badge" title="Irregular verb" aria-label="Irregular verb">!</button>` : ""; }
+function irregularBadge(v){ return v.type === "irregular" ? `<span class="irregular-badge" title="Irregular verb" aria-label="Irregular verb">!</span>` : ""; }
 function wordWithBadge(v, word){ return `<div class="word-line"><span class="word-text">${esc(word)}</span>${irregularBadge(v)}</div>`; }
 const PERSON_PROMPT = ["yo","tú","él/ella/usted","nosotros/nosotras","vosotros/vosotras","ellos/ellas/ustedes"];
 const TIME_PROMPT = {pres:"Presente", pret:"Pretérito Indefinido", fut:"Futuro"};
@@ -348,6 +347,16 @@ function renderReview(){
  const next=$("reviewNext");if(next)next.onclick=()=>{state.review=newReview();renderReview()};
 }
 
+function syncDictionaryFixedLayout(){
+  const topbar=document.querySelector(".topbar");
+  const tabs=document.querySelector(".tabs");
+  const special=document.querySelector("body.dictionary-view .dictionary-toolbar, body.dictionary-detail .detail-back");
+  if(topbar) document.documentElement.style.setProperty("--sv-topbar-h", `${topbar.getBoundingClientRect().height}px`);
+  if(tabs) document.documentElement.style.setProperty("--sv-tabs-h", `${tabs.getBoundingClientRect().height}px`);
+  if(special) document.documentElement.style.setProperty("--sv-special-h", `${special.getBoundingClientRect().height}px`);
+}
+window.addEventListener("resize", ()=>requestAnimationFrame(syncDictionaryFixedLayout));
+
 function renderDictionary(){
  document.body.classList.toggle("dictionary-detail", !!state.dictDetail);
  document.body.classList.toggle("dictionary-view", !state.dictDetail);
@@ -359,6 +368,7 @@ function renderDictionary(){
     ${wordWithBadge(v, displayInf(v))}${translation(v)}
     <h3>Presente</h3>${table(v,"pres")}<h3>Pretérito Indefinido</h3>${table(v,"pret")}<h3>Futuro</h3>${table(v,"fut")}
    </div>`;
+   requestAnimationFrame(syncDictionaryFixedLayout);
    $("backDict").onclick=()=>{ if (history.state?.dictionary === "detail") history.back(); else { state.dictDetail=null; renderDictionary(); } };return;
  }
  const letters=["A","B","C","D","E","F","G","H","I","J","L","M","N","O","P","Q","R","S","T","V"];
@@ -370,7 +380,8 @@ function renderDictionary(){
   <div class="alpha"><button data-letter="">All</button>${letters.map(l=>`<button data-letter="${l}" class="${state.dictLetter===l?"active":""}">${l}</button>`).join("")}</div>
  </div>
  <div class="card dictionary-card"><div class="verb-list">${list.length?list.map(v=>`<button class="verb-row" data-verb="${esc(v.inf)}"><div class="verb-name"><b>${esc(v.inf)}</b>${irregularBadge(v)}</div><span>${state.settings.en?esc(v.en):""}</span></button>`).join(""):'<div class="empty">No results found</div>'}</div></div>`;
- $("dictSearch").oninput=e=>{state.dictQuery=e.target.value;renderDictionary();const x=$("dictSearch");x.focus();x.setSelectionRange(x.value.length,x.value.length)};
+ requestAnimationFrame(syncDictionaryFixedLayout);
+ $("dictSearch").oninput=e=>{state.dictQuery=e.target.value;renderDictionary();requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));const x=$("dictSearch");x.focus();x.setSelectionRange(x.value.length,x.value.length)};
  el.querySelectorAll("[data-letter]").forEach(b=>b.onclick=()=>{state.dictLetter=b.dataset.letter;renderDictionary();requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));});
  el.querySelectorAll("[data-verb]").forEach(b=>b.onclick=()=>{
   state.dictDetail=VERBS.find(v=>v.inf===b.dataset.verb);
@@ -381,6 +392,9 @@ function renderDictionary(){
 function table(v,t){return `<table class="conj-table"><tbody>${v[t].map((f,i)=>`<tr><td>${PEOPLE[i]}</td><td><b>${f}</b></td></tr>`).join("")}</tbody></table>`}
 
 function render(){
+ if(state.screen !== "dictionary") {
+   document.body.classList.remove("dictionary-view", "dictionary-detail");
+ }
  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===state.screen));
  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.screen===state.screen));
  if(state.screen==="learn")renderLearn();
@@ -404,7 +418,7 @@ document.addEventListener("click", e=>{
   const left=Math.max(12, Math.min(window.innerWidth-12-tip.offsetWidth, r.left+r.width/2-tip.offsetWidth/2));
   tip.style.left=`${left}px`;
   tip.style.top=`${Math.max(12,top)}px`;
-});
+}, true);
 $("settingsBtn").onclick=()=>{$("settingsModal").classList.remove("hidden");renderSettings()};
 $("closeSettings").onclick=()=>{$("settingsModal").classList.add("hidden");render()};
 function renderSettings(){
