@@ -206,3 +206,44 @@ body.dictionary-detail .detail-back {
     top:calc(var(--topbar-height) + 52px);
   }
 }
+
+/* v22: keep the complete dictionary navigation area visible while scrolling.
+   The page header, tabs, and dictionary search/letter controls stay pinned;
+   the verb list/card scrolls underneath them. */
+body.dictionary-view .tabs,
+body.dictionary-detail .tabs {
+  position:sticky;
+  top:var(--topbar-height);
+  z-index:10;
+  margin-bottom:0;
+  padding-top:4px;
+  padding-bottom:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+body.dictionary-view .dictionary-toolbar {
+  position:sticky;
+  top:calc(var(--topbar-height) + 58px);
+  z-index:9;
+  background:var(--bg);
+  padding:12px 0 10px;
+  margin-bottom:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+body.dictionary-detail .detail-back {
+  position:sticky;
+  top:calc(var(--topbar-height) + 58px);
+  z-index:9;
+  display:block;
+  width:100%;
+  margin:0 0 12px;
+  padding:10px 0;
+  text-align:left;
+  background:var(--bg);
+  box-shadow:0 2px 6px rgba(0,0,0,.04);
+}
+@media (max-width:480px) {
+  body.dictionary-view .dictionary-toolbar,
+  body.dictionary-detail .detail-back {
+    top:calc(var(--topbar-height) + 52px);
+  }
+}
