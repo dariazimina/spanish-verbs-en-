@@ -227,6 +227,20 @@ const state = {
  settings: JSON.parse(localStorage.getItem("sv_settings") || '{"regular":true,"irregular":true,"pres":true,"pret":true,"fut":true,"ru":true}'),
  screen:"learn", learn:null, review:null, dictQuery:"", dictLetter:"", dictDetail:null
 };
+
+// Keep dictionary navigation inside the app. Opening a verb creates a browser
+// history entry, so Android's system Back button returns to the dictionary
+// list (with its current search/filter preserved) instead of leaving the app.
+if (!history.state || history.state.svApp !== true) {
+  history.replaceState({svApp:true, dictionary:"list"}, "");
+}
+window.addEventListener("popstate", () => {
+  if (state.screen === "dictionary" && state.dictDetail) {
+    state.dictDetail = null;
+    renderDictionary();
+  }
+});
+
 const $ = id => document.getElementById(id);
 const enabledVerbs = () => VERBS.filter(v => state.settings[v.type]);
 const enabledTimes = () => Object.keys(TIMES).filter(t => state.settings[t]);
@@ -242,7 +256,7 @@ function translation(v,t=null,p=null){
 function form(v,t,p){return v[t][p]}
 function displayForm(v,t,p){ return form(v,t,p).replace(/\s+de$/i, ""); }
 function displayInf(v){ return v.inf.replace(/\s*\([^)]*\)/g, "").trim(); }
-function irregularBadge(v){ return v.type === "irregular" ? `<span class="irregular-badge" title="Irregular verb" aria-label="Irregular verb">!</span>` : ""; }
+function irregularBadge(v){ return v.type === "irregular" ? `<button type="button" class="irregular-badge" title="Irregular verb" aria-label="Irregular verb">!</button>` : ""; }
 function wordWithBadge(v, word){ return `<div class="word-line"><span class="word-text">${esc(word)}</span>${irregularBadge(v)}</div>`; }
 const PERSON_PROMPT = ["yo","tú","él/ella/usted","nosotros/nosotras","vosotros/vosotras","ellos/ellas/ustedes"];
 const TIME_PROMPT = {pres:"Presente", pret:"Pretérito Indefinido", fut:"Futuro"};
@@ -335,6 +349,7 @@ function renderReview(){
 }
 
 function renderDictionary(){
+ document.body.classList.toggle("dictionary-detail", !!state.dictDetail);
  // Dictionary always contains the complete VERBS dataset. Learning settings only affect Learn/Repeat.
  const el=$("dictionary");
  if(state.dictDetail){
@@ -343,7 +358,7 @@ function renderDictionary(){
     ${wordWithBadge(v, displayInf(v))}${translation(v)}
     <h3>Presente</h3>${table(v,"pres")}<h3>Pretérito Indefinido</h3>${table(v,"pret")}<h3>Futuro</h3>${table(v,"fut")}
    </div>`;
-   $("backDict").onclick=()=>{state.dictDetail=null;renderDictionary()};return;
+   $("backDict").onclick=()=>{ if (history.state?.dictionary === "detail") history.back(); else { state.dictDetail=null; renderDictionary(); } };return;
  }
  const letters=["A","B","C","D","E","F","G","H","I","J","L","M","N","O","P","Q","R","S","T","V"];
  const q=state.dictQuery.toLowerCase();
@@ -356,7 +371,11 @@ function renderDictionary(){
  </div>`;
  $("dictSearch").oninput=e=>{state.dictQuery=e.target.value;renderDictionary();const x=$("dictSearch");x.focus();x.setSelectionRange(x.value.length,x.value.length)};
  el.querySelectorAll("[data-letter]").forEach(b=>b.onclick=()=>{state.dictLetter=b.dataset.letter;renderDictionary();requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));});
- el.querySelectorAll("[data-verb]").forEach(b=>b.onclick=()=>{state.dictDetail=VERBS.find(v=>v.inf===b.dataset.verb);renderDictionary()});
+ el.querySelectorAll("[data-verb]").forEach(b=>b.onclick=()=>{
+  state.dictDetail=VERBS.find(v=>v.inf===b.dataset.verb);
+  history.pushState({svApp:true, dictionary:"detail", verb:b.dataset.verb}, "");
+  renderDictionary();
+});
 }
 function table(v,t){return `<table class="conj-table"><tbody>${v[t].map((f,i)=>`<tr><td>${PEOPLE[i]}</td><td><b>${f}</b></td></tr>`).join("")}</tbody></table>`}
 
@@ -368,6 +387,23 @@ function render(){
  if(state.screen==="dictionary")renderDictionary();
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{state.screen=b.dataset.screen;render()});
+document.addEventListener("click", e=>{
+  const badge=e.target.closest(".irregular-badge");
+  const old=document.querySelector(".irregular-tooltip-popup");
+  if(old) old.remove();
+  if(!badge) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const tip=document.createElement("div");
+  tip.className="irregular-tooltip-popup";
+  tip.textContent="Irregular verb";
+  document.body.appendChild(tip);
+  const r=badge.getBoundingClientRect();
+  const top=Math.min(window.innerHeight-12-tip.offsetHeight, r.bottom+8);
+  const left=Math.max(12, Math.min(window.innerWidth-12-tip.offsetWidth, r.left+r.width/2-tip.offsetWidth/2));
+  tip.style.left=`${left}px`;
+  tip.style.top=`${Math.max(12,top)}px`;
+});
 $("settingsBtn").onclick=()=>{$("settingsModal").classList.remove("hidden");renderSettings()};
 $("closeSettings").onclick=()=>{$("settingsModal").classList.add("hidden");render()};
 function renderSettings(){
