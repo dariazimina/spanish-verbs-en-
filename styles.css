@@ -46,7 +46,7 @@ main { max-width:720px; margin:auto; padding:14px 18px 40px; }
 .verb-row span:last-child { color:var(--muted); }
 .conj-table { width:100%; border-collapse:collapse; margin-top:10px; }
 .conj-table td,.conj-table th { padding:9px 5px; border-bottom:1px solid var(--border); text-align:left; }
-.modal { position:fixed; inset:0; background:#0008; z-index:1000; display:flex; align-items:flex-end; justify-content:center; }
+.modal { position:fixed; inset:0; background:#0008; z-index:2147483647; display:flex; align-items:flex-end; justify-content:center; }
 .modal.hidden { display:none; }
 .modal-card { width:min(720px,100%); max-height:90vh; overflow:auto; background:#fff; border-radius:22px 22px 0 0; padding:20px; }
 .modal-head { display:flex; justify-content:space-between; align-items:center; }
@@ -290,4 +290,17 @@ body.dictionary-detail .detail-back {
     padding-left: 22px;
     padding-right: 22px;
   }
+}
+
+/* v25: settings modal must always sit above fixed dictionary navigation.
+   Some mobile Chromium/WebView stacking contexts can otherwise paint fixed
+   dictionary elements above the modal backdrop. */
+body.settings-open .topbar,
+body.settings-open .tabs,
+body.settings-open .dictionary-toolbar,
+body.settings-open .detail-back {
+  z-index: 0 !important;
+}
+body.settings-open .modal {
+  z-index: 2147483647 !important;
 }

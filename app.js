@@ -419,8 +419,8 @@ document.addEventListener("click", e=>{
   tip.style.left=`${left}px`;
   tip.style.top=`${Math.max(12,top)}px`;
 }, true);
-$("settingsBtn").onclick=()=>{$("settingsModal").classList.remove("hidden");renderSettings()};
-$("closeSettings").onclick=()=>{$("settingsModal").classList.add("hidden");render()};
+$("settingsBtn").onclick=()=>{document.body.classList.add("settings-open");$("settingsModal").classList.remove("hidden");renderSettings()};
+$("closeSettings").onclick=()=>{document.body.classList.remove("settings-open");$("settingsModal").classList.add("hidden");render()};
 function renderSettings(){
  const items=[
   ["regular","Regular verbs","-ar, -er, -ir"],
